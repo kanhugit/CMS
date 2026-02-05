@@ -1,6 +1,6 @@
-import express from "express";
-import db from "../config/db.js";
-import multer from "multer";
+const express = require("express");
+const db = require("../config/db.js");
+const multer = require("multer");
 
 const router = express.Router();
 
@@ -11,44 +11,79 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-/* HERO */
-router.get("/hero", (req, res) => {
-  db.query("SELECT * FROM hero LIMIT 1", (e, r) => res.json(r[0]));
+/* ================= HERO SLIDES ================= */
+
+// GET all slides
+router.get("/hero-slides", (req, res) => {
+  db.query("SELECT * FROM hero_slides", (err, rows) => {
+    res.json(rows);
+  });
 });
 
-router.put("/hero", upload.single("image"), (req, res) => {
+// ADD slide
+router.post("/hero-slides", upload.single("image"), (req, res) => {
   const { title, subtitle } = req.body;
-  const image = req.file?.filename;
+  const image = req.file.filename;
 
-  let q = "UPDATE hero SET title=?, subtitle=?";
-  let v = [title, subtitle];
-  if (image) {
-    q += ", image=?";
-    v.push(image);
-  }
-  q += " WHERE id=1";
-
-  db.query(q, v, () => res.json({ success: true }));
-});
-
-/* INDUSTRIES */
-router.get("/industries", (req, res) => {
-  db.query("SELECT * FROM industries", (e, r) => res.json(r));
-});
-
-router.post("/industries", (req, res) => {
-  const { name, description } = req.body;
   db.query(
-    "INSERT INTO industries (name, description) VALUES (?,?)",
-    [name, description],
+    "INSERT INTO hero_slides (title, subtitle, image) VALUES (?,?,?)",
+    [title, subtitle, image],
     () => res.json({ success: true })
   );
 });
 
-router.delete("/industries/:id", (req, res) => {
-  db.query("DELETE FROM industries WHERE id=?", [req.params.id], () =>
+// UPDATE slide
+router.put("/hero-slides/:id", upload.single("image"), (req, res) => {
+  const { title, subtitle } = req.body;
+  const { id } = req.params;
+
+  let query = "UPDATE hero_slides SET title=?, subtitle=?";
+  let values = [title, subtitle];
+
+  if (req.file) {
+    query += ", image=?";
+    values.push(req.file.filename);
+  }
+
+  query += " WHERE id=?";
+  values.push(id);
+
+  db.query(query, values, () => res.json({ success: true }));
+});
+
+// DELETE slide
+router.delete("/hero-slides/:id", (req, res) => {
+  db.query("DELETE FROM hero_slides WHERE id=?", [req.params.id], () =>
     res.json({ success: true })
   );
 });
 
-export default router;
+/* ================= INDUSTRIES ================= */
+
+router.get("/industries", (req, res) => {
+  db.query("SELECT * FROM industries", (err, result) => {
+    if (err) return res.status(500).json(err);
+    res.json(result);
+  });
+});
+router.post("/industries", (req, res) => {
+  const { name, description } = req.body;
+
+  db.query(
+    "INSERT INTO industries (name, description) VALUES (?, ?)",
+    [name, description],
+    (err) => {
+      if (err) return res.status(500).json(err);
+      res.json({ success: true });
+    }
+  );
+});
+router.delete("/industries/:id", (req, res) => {
+  db.query("DELETE FROM industries WHERE id=?", [req.params.id], (err) => {
+    if (err) return res.status(500).json(err);
+    res.json({ success: true });
+  });
+});
+
+/* ✅ COMMONJS EXPORT */
+module.exports = router;

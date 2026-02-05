@@ -1,36 +1,23 @@
-// const express = require("express");
-// const cors = require("cors");
-// require("dotenv").config();
-
-// const contactRoutes = require("./routes/contactRoutes");
-
-// const app = express();
-// app.use(cors());
-// app.use(express.json());
-
-// app.use("/api", contactRoutes);
-
-// app.get("/", (req, res) => res.send("Preserbyte Backend Running"));
-
-// app.listen(5000, () => console.log("Server running on http://localhost:5000"));
-
 const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2/promise");
 const nodemailer = require("nodemailer");
-// const authRoutes = require("./routes/authRoutes.js");
-import contentRoutes from "./routes/contentRoutes.js";
+const path = require("path");
 
+const contentRoutes = require("./routes/contentRoutes");
+// ✅ FIRST create app
 const app = express();
-
+// ✅ Middleware
 app.use(cors());
 app.use(express.json());
-app.use("/uploads", express.static("uploads"));
-app.use("/api/content", contentRoutes);
-// app.use("/api/auth", authRoutes);
+// ✅ Static Upload Folder
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// ✅ Routes AFTER app creation
+app.use("/content", contentRoutes);// for content management routes
+
 
 const PORT = 5000;
-
+// ================= START SERVER =================
 // ✅ Wrap everything inside async function
 async function startServer() {
   // 🔹 MySQL connection
@@ -94,6 +81,5 @@ async function startServer() {
     console.log(`✅ Server running on http://localhost:${PORT}`);
   });
 }
-
 // ✅ Call function
 startServer();
